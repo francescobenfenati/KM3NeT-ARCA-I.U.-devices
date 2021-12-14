@@ -4,10 +4,7 @@ from pyvisa.constants import StopBits, Parity
 
 rm=pyvisa.ResourceManager()
 print(rm.list_resources())
-#does not show tcpip interface but nonetheless you can connect to it
 
-#usb interface
-#agilent=rm.open_resource('USB0::2391::6407::MY50002594::0::INSTR')
 
 #rs-232 interface
 try:
@@ -23,30 +20,30 @@ try:
         if raw_input == 'exit':
             minisvs.close()
             exit()
-        if raw_input == '':
+        elif raw_input == '':
             continue
-        if raw_input == "#":
-        #    raw_input=raw_input.encode()
-            minisvs.write(raw_input)
-            while True:
-                print("flushing")
-                minisvs.flush()
-        #        if ser.in_waiting > 0:
-        #            print("bytes in buffer: ",ser.in_waiting)
-        #            print(ser.readline())
-        #        else:
-        #            print("after giving # command, the buffer is empty: ",ser.in_waiting)
-        #            break
-
-        else:
-            # send the character to the device
+        elif raw_input == "#":
             minisvs.write(raw_input)
             # let's wait one second before reading output (let's give device time to answer)
             time.sleep(1)
-            try:
-                while minisvs.bytes_in_buffer > 0:
+            if minisvs.bytes_in_buffer > 0:
+                #print("flushing")
+                #minisvs.flush()
+                print("Remaining bytes in buffer: ",minisvs.bytes_in_buffer)
+                print("Reading...")
+                #read() reads until end of line character encountered. After '#' command, the device sends a '>', with no eol character so that the read() would get stuck in the while loop.
+                while minisvs.bytes_in_buffer > 1:
                     print(minisvs.read())
                     print(minisvs.bytes_in_buffer)
+                print("Stopping the unit.")
+            
+        else:
+            # send the character to the device
+            minisvs.write(raw_input)
+            time.sleep(1)
+            try:
+                while True:
+                    print(minisvs.read())
             except KeyboardInterrupt:
                 pass
 
